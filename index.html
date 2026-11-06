@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bảng tuần hoàn thông minh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Sora:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--bg0:#04020c;--bg1:#0d0829;--panel:rgba(14,10,42,.66);--line:rgba(160,140,255,.24);--txt:#ebe8ff;--mut:#9d96cc;--cy:#7cf0ff;--am:#ffb86b}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:15px/1.55 'Be Vietnam Pro',system-ui,sans-serif;color:var(--txt);min-height:100vh;
+ background:radial-gradient(1200px 700px at 85% -10%,#2a1066 0,transparent 60%),radial-gradient(900px 600px at 0% 100%,#0b2a5c 0,transparent 55%),linear-gradient(#070418,#04020c)}
+#stars{position:fixed;inset:0;z-index:-1;width:100%;height:100%}
+h1,h2,h3{font-family:Sora,sans-serif;margin:0}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:18px clamp(14px,3vw,36px) 6px}
+header h1{font-size:clamp(20px,2.6vw,28px);letter-spacing:.2px}
+header p{margin:2px 0 0;color:var(--mut);font-size:13px}
+#search{width:min(300px,100%);padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(10,7,32,.7);color:var(--txt);font:inherit}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+main{padding:10px clamp(14px,3vw,36px) 40px;display:grid;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(10px);padding:16px}
+.scroll{overflow-x:auto}
+#legend{display:flex;flex-wrap:wrap;gap:6px 8px;margin-bottom:12px}
+#legend button{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--txt);font:inherit;font-size:12.5px;cursor:pointer}
+#legend i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+#legend button.on{background:rgba(255,255,255,.12);border-color:var(--c)}
+#table{display:grid;grid-template-columns:repeat(18,minmax(46px,1fr));grid-template-rows:repeat(7,auto) 14px repeat(2,auto);gap:4px;min-width:880px}
+.cell{--c:#fff;position:relative;padding:3px 4px 4px;border-radius:7px;cursor:pointer;text-align:center;line-height:1.1;
+ background:color-mix(in srgb,var(--c) 15%,rgba(8,5,28,.7));border:1px solid color-mix(in srgb,var(--c) 55%,transparent);
+ transition:transform .12s,box-shadow .12s,opacity .2s;min-height:56px;color:var(--txt);font:inherit}
+.cell:hover{transform:scale(1.18);z-index:3;box-shadow:0 0 18px color-mix(in srgb,var(--c) 70%,transparent)}
+.cell.sel{box-shadow:0 0 0 2px #fff,0 0 22px var(--c);z-index:2}
+.cell.dim{opacity:.16}
+.cell .n{display:block;font-size:9.5px;color:var(--mut);text-align:left}
+.cell .s{display:block;font:700 16px Sora,sans-serif;color:var(--c)}
+.cell .m{display:block;font-size:8.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph{display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--mut);border:1px dashed var(--line);border-radius:7px;cursor:default}
+#tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+#tabs button{padding:8px 16px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--mut);font:500 14px 'Be Vietnam Pro';cursor:pointer}
+#tabs button.on{background:linear-gradient(135deg,#3a22a8,#1a5fb4);color:#fff;border-color:transparent}
+.tab{display:none}.tab.on{display:block}
+.two{display:grid;grid-template-columns:minmax(280px,5fr) minmax(300px,6fr);gap:18px}
+@media(max-width:860px){.two{grid-template-columns:1fr}}
+.hero{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+.big{width:96px;height:96px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 18%,transparent)}
+.big b{font:700 38px Sora;color:var(--c);line-height:1}.big span{font-size:12px;color:var(--mut)}
+.hero h2{font-size:26px}.hero small{color:var(--c);font-size:13.5px}
+.props{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.props div{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+.props span{display:block;font-size:11.5px;color:var(--mut)}.props b{font-weight:600;font-size:14px}
+.props .wide{grid-column:1/-1}
+.note{margin:8px 0 0;color:#d9d4ff}
+.viewer{position:relative;min-height:380px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(circle at 50% 50%,rgba(60,40,150,.35),rgba(2,1,10,.8))}
+.viewer canvas{width:100%;height:100%;display:block;position:absolute;inset:0;touch-action:none;cursor:grab}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px;color:var(--mut);font-size:13px}
+.btn{padding:7px 14px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--txt);font:inherit;cursor:pointer}
+.btn:hover{background:rgba(255,255,255,.14)}
+input[type=range]{accent-color:var(--cy)}
+.hint{position:absolute;left:12px;bottom:8px;font-size:12px;color:var(--mut);pointer-events:none}
+.rx{display:grid;grid-template-columns:minmax(240px,3fr) minmax(300px,6fr);gap:18px}
+@media(max-width:860px){.rx{grid-template-columns:1fr}}
+#rlist{display:grid;gap:6px;align-content:start}
+#rlist button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);font:inherit;cursor:pointer}
+#rlist button.on{border-color:var(--cy);background:rgba(124,240,255,.1)}
+#rlist small{display:block;color:var(--mut)}
+#eq{font:700 clamp(18px,2.4vw,26px) Sora;margin:10px 0 2px;color:var(--cy)}
+.chat{display:flex;flex-direction:column;height:min(520px,70vh)}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 4px 10px}
+.m{max-width:86%;padding:10px 13px;border-radius:14px;border:1px solid var(--line);word-wrap:break-word}
+.m.bot{align-self:flex-start;background:rgba(80,60,200,.2)}
+.m.me{align-self:flex-end;background:rgba(124,240,255,.14)}
+.m.ok{border-color:#5ee0a0}.m.bad{border-color:#ff7b8b}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.opts button{padding:7px 13px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--txt);font:inherit;cursor:pointer}
+.opts button:hover:not(:disabled){background:rgba(124,240,255,.18)}
+.opts button:disabled{opacity:.6;cursor:default}
+.opts button.right{border-color:#5ee0a0;background:rgba(94,224,160,.2);opacity:1}
+.opts button.wrong{border-color:#ff7b8b;background:rgba(255,123,139,.2);opacity:1}
+.row{display:flex;gap:8px;margin-top:8px}
+.row input{flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(8,5,28,.75);color:var(--txt);font:inherit}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;color:var(--mut);font-size:13px}
+.bar b{color:var(--am)}
+.bar select{background:rgba(8,5,28,.8);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{padding:5px 11px;font-size:12.5px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;font-family:inherit}
+.chips button:hover{color:var(--txt);border-color:var(--cy)}
+.src{font-size:11px;color:var(--mut);margin-top:4px}
+@media(prefers-reduced-motion:reduce){.cell{transition:none}}
+</style></head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<header>
+  <div><h1>Bảng tuần hoàn thông minh</h1><p>118 nguyên tố, mô hình electron 3D, phản ứng hóa học, ôn tập và trợ lý AI</p></div>
+  <input id="search" type="search" placeholder="Tìm theo tên, ký hiệu hoặc số hiệu" aria-label="Tìm nguyên tố">
+</header>
+<main>
+  <section class="panel scroll" aria-label="Bảng tuần hoàn">
+    <div id="legend"></div>
+    <div id="table"></div>
+  </section>
+
+  <section class="panel">
+    <div id="tabs" role="tablist">
+      <button class="on" data-t="t1">Nguyên tố</button>
+      <button data-t="t2">Phản ứng hóa học</button>
+      <button data-t="t3">Chatbot ôn tập</button>
+      <button data-t="t4">Trợ lý AI</button>
+    </div>
+
+    <div id="t1" class="tab on"><div class="two">
+      <div id="info"></div>
+      <div>
+        <div class="viewer"><canvas id="atomCv"></canvas><div class="hint">Kéo chuột để xoay mô hình</div></div>
+        <div class="ctrl">
+          <button class="btn" id="pauseA">Tạm dừng</button>
+          <label>Tốc độ <input type="range" id="spdA" min=".2" max="3" step=".1" value="1"></label>
+          <span id="legA">Electron lớp ngoài cùng màu cam</span>
+        </div>
+      </div>
+    </div></div>
+
+    <div id="t2" class="tab"><div class="rx">
+      <div id="rlist"></div>
+      <div>
+        <div class="viewer" style="min-height:340px"><canvas id="rxCv"></canvas><div class="hint">Kéo chuột để xoay</div></div>
+        <div id="eq"></div><div id="rinfo" class="note"></div>
+        <div class="ctrl"><button class="btn" id="replay">Chạy lại</button>
+          <label>Tốc độ <input type="range" id="spdR" min=".3" max="2.5" step=".1" value="1"></label></div>
+      </div>
+    </div></div>
+
+    <div id="t3" class="tab"><div class="chat">
+      <div class="bar">Điểm: <b id="score">0/0</b> Chuỗi đúng: <b id="streak">0</b>
+        <label>Phạm vi <select id="lvl"><option value="36">Nguyên tố 1–36</option><option value="54">1–54</option><option value="118">1–118</option></select></label>
+        <button class="btn" id="nextQ">Câu mới</button></div>
+      <div class="msgs" id="qMsgs"></div>
+      <div class="row"><input id="qIn" placeholder="Gõ đáp án hoặc chọn A, B, C, D" aria-label="Đáp án"><button class="btn" id="qSend">Trả lời</button></div>
+    </div></div>
+
+    <div id="t4" class="tab"><div class="chat">
+      <div class="msgs" id="aMsgs"></div>
+      <div class="chips" id="chips"></div>
+      <div class="row"><input id="aIn" placeholder="Hỏi về nguyên tố, phản ứng hay khái niệm hóa học" aria-label="Câu hỏi"><button class="btn" id="aSend">Gửi</button></div>
+    </div></div>
+  </section>
+</main>
+
+<script>
+
+const DATA={"elements":[{"z":1,"sym":"H","name":"Hiđro","mass":1.008,"cat":"nonmetal","row":1,"col":1,"period":1,"group":1,"config":"1s¹","shells":[1],"state":"khí","valence":1,"neutrons":0,"note":"Nguyên tố nhẹ nhất và nhiều nhất vũ trụ, là nhiên liệu của các ngôi sao."},{"z":2,"sym":"He","name":"Heli","mass":4.0026,"cat":"noble","row":1,"col":18,"period":1,"group":18,"config":"1s²","shells":[2],"state":"khí","valence":2,"neutrons":2,"note":"Nhẹ thứ hai, không cháy; dùng bơm khinh khí cầu và làm lạnh máy MRI."},{"z":3,"sym":"Li","name":"Liti","mass":6.94,"cat":"alkali","row":2,"col":1,"period":2,"group":1,"config":"1s² 2s¹","shells":[2,1],"state":"rắn","valence":1,"neutrons":4,"note":"Liti dễ nhường 1 electron nên rất hoạt động; phản ứng mạnh với nước."},{"z":4,"sym":"Be","name":"Beri","mass":9.0122,"cat":"alkaline","row":2,"col":2,"period":2,"group":2,"config":"1s² 2s²","shells":[2,2],"state":"rắn","valence":2,"neutrons":5,"note":"Beri nhường 2 electron, hoạt động hóa học mạnh nhưng yếu hơn kim loại kiềm."},{"z":5,"sym":"B","name":"Bo","mass":10.81,"cat":"metalloid","row":2,"col":13,"period":2,"group":13,"config":"1s² 2s² 2p¹","shells":[2,3],"state":"rắn","valence":3,"neutrons":6,"note":"Bo có tính chất trung gian giữa kim loại và phi kim, thường là chất bán dẫn."},{"z":6,"sym":"C","name":"Cacbon","mass":12.011,"cat":"nonmetal","row":2,"col":14,"period":2,"group":14,"config":"1s² 2s² 2p²","shells":[2,4],"state":"rắn","valence":4,"neutrons":6,"note":"Nền tảng của hóa học hữu cơ và sự sống; tồn tại ở dạng than chì, kim cương."},{"z":7,"sym":"N","name":"Nitơ","mass":14.007,"cat":"nonmetal","row":2,"col":15,"period":2,"group":15,"config":"1s² 2s² 2p³","shells":[2,5],"state":"khí","valence":5,"neutrons":7,"note":"Chiếm khoảng 78% thể tích khí quyển Trái Đất."},{"z":8,"sym":"O","name":"Oxi","mass":15.999,"cat":"nonmetal","row":2,"col":16,"period":2,"group":16,"config":"1s² 2s² 2p⁴","shells":[2,6],"state":"khí","valence":6,"neutrons":8,"note":"Cần cho hô hấp và sự cháy; chiếm khoảng 21% khí quyển."},{"z":9,"sym":"F","name":"Flo","mass":18.998,"cat":"halogen","row":2,"col":17,"period":2,"group":17,"config":"1s² 2s² 2p⁵","shells":[2,7],"state":"khí","valence":7,"neutrons":10,"note":"Flo thiếu 1 electron để đủ 8 nên rất dễ nhận electron, là phi kim mạnh."},{"z":10,"sym":"Ne","name":"Neon","mass":20.18,"cat":"noble","row":2,"col":18,"period":2,"group":18,"config":"1s² 2s² 2p⁶","shells":[2,8],"state":"khí","valence":8,"neutrons":10,"note":"Neon có lớp ngoài cùng bão hòa nên rất trơ về mặt hóa học."},{"z":11,"sym":"Na","name":"Natri","mass":22.99,"cat":"alkali","row":3,"col":1,"period":3,"group":1,"config":"1s² 2s² 2p⁶ 3s¹","shells":[2,8,1],"state":"rắn","valence":1,"neutrons":12,"note":"Kim loại mềm, cắt được bằng dao; là thành phần của muối ăn."},{"z":12,"sym":"Mg","name":"Magie","mass":24.305,"cat":"alkaline","row":3,"col":2,"period":3,"group":2,"config":"1s² 2s² 2p⁶ 3s²","shells":[2,8,2],"state":"rắn","valence":2,"neutrons":12,"note":"Magie nhường 2 electron, hoạt động hóa học mạnh nhưng yếu hơn kim loại kiềm."},{"z":13,"sym":"Al","name":"Nhôm","mass":26.982,"cat":"post","row":3,"col":13,"period":3,"group":13,"config":"1s² 2s² 2p⁶ 3s² 3p¹","shells":[2,8,3],"state":"rắn","valence":3,"neutrons":14,"note":"Nhẹ, bền nhờ lớp oxit bảo vệ; dùng làm vỏ máy bay, lon nước."},{"z":14,"sym":"Si","name":"Silic","mass":28.085,"cat":"metalloid","row":3,"col":14,"period":3,"group":14,"config":"1s² 2s² 2p⁶ 3s² 3p²","shells":[2,8,4],"state":"rắn","valence":4,"neutrons":14,"note":"Nền tảng của chip bán dẫn và thủy tinh."},{"z":15,"sym":"P","name":"Photpho","mass":30.974,"cat":"nonmetal","row":3,"col":15,"period":3,"group":15,"config":"1s² 2s² 2p⁶ 3s² 3p³","shells":[2,8,5],"state":"rắn","valence":5,"neutrons":16,"note":"Photpho dễ nhận hoặc góp chung electron, thường cách điện và cách nhiệt."},{"z":16,"sym":"S","name":"Lưu huỳnh","mass":32.06,"cat":"nonmetal","row":3,"col":16,"period":3,"group":16,"config":"1s² 2s² 2p⁶ 3s² 3p⁴","shells":[2,8,6],"state":"rắn","valence":6,"neutrons":16,"note":"Lưu huỳnh dễ nhận hoặc góp chung electron, thường cách điện và cách nhiệt."},{"z":17,"sym":"Cl","name":"Clo","mass":35.45,"cat":"halogen","row":3,"col":17,"period":3,"group":17,"config":"1s² 2s² 2p⁶ 3s² 3p⁵","shells":[2,8,7],"state":"khí","valence":7,"neutrons":18,"note":"Khí màu vàng lục, độc; dùng khử trùng nước."},{"z":18,"sym":"Ar","name":"Argon","mass":39.948,"cat":"noble","row":3,"col":18,"period":3,"group":18,"config":"1s² 2s² 2p⁶ 3s² 3p⁶","shells":[2,8,8],"state":"khí","valence":8,"neutrons":22,"note":"Argon có lớp ngoài cùng bão hòa nên rất trơ về mặt hóa học."},{"z":19,"sym":"K","name":"Kali","mass":39.098,"cat":"alkali","row":4,"col":1,"period":4,"group":1,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹","shells":[2,8,8,1],"state":"rắn","valence":1,"neutrons":20,"note":"Kali dễ nhường 1 electron nên rất hoạt động; phản ứng mạnh với nước."},{"z":20,"sym":"Ca","name":"Canxi","mass":40.078,"cat":"alkaline","row":4,"col":2,"period":4,"group":2,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 4s²","shells":[2,8,8,2],"state":"rắn","valence":2,"neutrons":20,"note":"Thành phần chính của xương, răng và vỏ sò."},{"z":21,"sym":"Sc","name":"Scandi","mass":44.956,"cat":"transition","row":4,"col":3,"period":4,"group":3,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹ 4s²","shells":[2,8,9,2],"state":"rắn","valence":2,"neutrons":24,"note":"Scandi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":22,"sym":"Ti","name":"Titan","mass":47.867,"cat":"transition","row":4,"col":4,"period":4,"group":4,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d² 4s²","shells":[2,8,10,2],"state":"rắn","valence":2,"neutrons":26,"note":"Titan có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":23,"sym":"V","name":"Vanadi","mass":50.942,"cat":"transition","row":4,"col":5,"period":4,"group":5,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d³ 4s²","shells":[2,8,11,2],"state":"rắn","valence":2,"neutrons":28,"note":"Vanadi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":24,"sym":"Cr","name":"Crom","mass":51.996,"cat":"transition","row":4,"col":6,"period":4,"group":6,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d⁵ 4s¹","shells":[2,8,13,1],"state":"rắn","valence":1,"neutrons":28,"note":"Crom có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":25,"sym":"Mn","name":"Mangan","mass":54.938,"cat":"transition","row":4,"col":7,"period":4,"group":7,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d⁵ 4s²","shells":[2,8,13,2],"state":"rắn","valence":2,"neutrons":30,"note":"Mangan có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":26,"sym":"Fe","name":"Sắt","mass":55.845,"cat":"transition","row":4,"col":8,"period":4,"group":8,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d⁶ 4s²","shells":[2,8,14,2],"state":"rắn","valence":2,"neutrons":30,"note":"Kim loại chính của thép; có trong hemoglobin vận chuyển oxi trong máu."},{"z":27,"sym":"Co","name":"Coban","mass":58.933,"cat":"transition","row":4,"col":9,"period":4,"group":9,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d⁷ 4s²","shells":[2,8,15,2],"state":"rắn","valence":2,"neutrons":32,"note":"Coban có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":28,"sym":"Ni","name":"Niken","mass":58.693,"cat":"transition","row":4,"col":10,"period":4,"group":10,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d⁸ 4s²","shells":[2,8,16,2],"state":"rắn","valence":2,"neutrons":31,"note":"Niken có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":29,"sym":"Cu","name":"Đồng","mass":63.546,"cat":"transition","row":4,"col":11,"period":4,"group":11,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s¹","shells":[2,8,18,1],"state":"rắn","valence":1,"neutrons":35,"note":"Dẫn điện rất tốt nên dùng làm dây điện."},{"z":30,"sym":"Zn","name":"Kẽm","mass":65.38,"cat":"transition","row":4,"col":12,"period":4,"group":12,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s²","shells":[2,8,18,2],"state":"rắn","valence":2,"neutrons":35,"note":"Kẽm có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":31,"sym":"Ga","name":"Gali","mass":69.723,"cat":"post","row":4,"col":13,"period":4,"group":13,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p¹","shells":[2,8,18,3],"state":"rắn","valence":3,"neutrons":39,"note":"Gali là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":32,"sym":"Ge","name":"Gecmani","mass":72.63,"cat":"metalloid","row":4,"col":14,"period":4,"group":14,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p²","shells":[2,8,18,4],"state":"rắn","valence":4,"neutrons":41,"note":"Gecmani có tính chất trung gian giữa kim loại và phi kim, thường là chất bán dẫn."},{"z":33,"sym":"As","name":"Asen","mass":74.922,"cat":"metalloid","row":4,"col":15,"period":4,"group":15,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p³","shells":[2,8,18,5],"state":"rắn","valence":5,"neutrons":42,"note":"Asen có tính chất trung gian giữa kim loại và phi kim, thường là chất bán dẫn."},{"z":34,"sym":"Se","name":"Selen","mass":78.971,"cat":"nonmetal","row":4,"col":16,"period":4,"group":16,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁴","shells":[2,8,18,6],"state":"rắn","valence":6,"neutrons":45,"note":"Selen dễ nhận hoặc góp chung electron, thường cách điện và cách nhiệt."},{"z":35,"sym":"Br","name":"Brom","mass":79.904,"cat":"halogen","row":4,"col":17,"period":4,"group":17,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁵","shells":[2,8,18,7],"state":"lỏng","valence":7,"neutrons":45,"note":"Brom thiếu 1 electron để đủ 8 nên rất dễ nhận electron, là phi kim mạnh."},{"z":36,"sym":"Kr","name":"Krypton","mass":83.798,"cat":"noble","row":4,"col":18,"period":4,"group":18,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶","shells":[2,8,18,8],"state":"khí","valence":8,"neutrons":48,"note":"Krypton có lớp ngoài cùng bão hòa nên rất trơ về mặt hóa học."},{"z":37,"sym":"Rb","name":"Rubidi","mass":85.468,"cat":"alkali","row":5,"col":1,"period":5,"group":1,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 5s¹","shells":[2,8,18,8,1],"state":"rắn","valence":1,"neutrons":48,"note":"Rubidi dễ nhường 1 electron nên rất hoạt động; phản ứng mạnh với nước."},{"z":38,"sym":"Sr","name":"Stronti","mass":87.62,"cat":"alkaline","row":5,"col":2,"period":5,"group":2,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 5s²","shells":[2,8,18,8,2],"state":"rắn","valence":2,"neutrons":50,"note":"Stronti nhường 2 electron, hoạt động hóa học mạnh nhưng yếu hơn kim loại kiềm."},{"z":39,"sym":"Y","name":"Ytri","mass":88.906,"cat":"transition","row":5,"col":3,"period":5,"group":3,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹ 5s²","shells":[2,8,18,9,2],"state":"rắn","valence":2,"neutrons":50,"note":"Ytri có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":40,"sym":"Zr","name":"Zirconi","mass":91.224,"cat":"transition","row":5,"col":4,"period":5,"group":4,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d² 5s²","shells":[2,8,18,10,2],"state":"rắn","valence":2,"neutrons":51,"note":"Zirconi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":41,"sym":"Nb","name":"Niobi","mass":92.906,"cat":"transition","row":5,"col":5,"period":5,"group":5,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d⁴ 5s¹","shells":[2,8,18,12,1],"state":"rắn","valence":1,"neutrons":52,"note":"Niobi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":42,"sym":"Mo","name":"Molipden","mass":95.95,"cat":"transition","row":5,"col":6,"period":5,"group":6,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d⁵ 5s¹","shells":[2,8,18,13,1],"state":"rắn","valence":1,"neutrons":54,"note":"Molipden có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":43,"sym":"Tc","name":"Tecneti","mass":98.0,"cat":"transition","row":5,"col":7,"period":5,"group":7,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d⁵ 5s²","shells":[2,8,18,13,2],"state":"rắn","valence":2,"neutrons":55,"note":"Tecneti có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":44,"sym":"Ru","name":"Rutheni","mass":101.07,"cat":"transition","row":5,"col":8,"period":5,"group":8,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d⁷ 5s¹","shells":[2,8,18,15,1],"state":"rắn","valence":1,"neutrons":57,"note":"Rutheni có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":45,"sym":"Rh","name":"Rhodi","mass":102.91,"cat":"transition","row":5,"col":9,"period":5,"group":9,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d⁸ 5s¹","shells":[2,8,18,16,1],"state":"rắn","valence":1,"neutrons":58,"note":"Rhodi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":46,"sym":"Pd","name":"Paladi","mass":106.42,"cat":"transition","row":5,"col":10,"period":5,"group":10,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰","shells":[2,8,18,18],"state":"rắn","valence":18,"neutrons":60,"note":"Paladi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":47,"sym":"Ag","name":"Bạc","mass":107.87,"cat":"transition","row":5,"col":11,"period":5,"group":11,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s¹","shells":[2,8,18,18,1],"state":"rắn","valence":1,"neutrons":61,"note":"Dẫn điện và dẫn nhiệt tốt nhất trong các kim loại."},{"z":48,"sym":"Cd","name":"Cadmi","mass":112.41,"cat":"transition","row":5,"col":12,"period":5,"group":12,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s²","shells":[2,8,18,18,2],"state":"rắn","valence":2,"neutrons":64,"note":"Cadmi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":49,"sym":"In","name":"Indi","mass":114.82,"cat":"post","row":5,"col":13,"period":5,"group":13,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p¹","shells":[2,8,18,18,3],"state":"rắn","valence":3,"neutrons":66,"note":"Indi là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":50,"sym":"Sn","name":"Thiếc","mass":118.71,"cat":"post","row":5,"col":14,"period":5,"group":14,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p²","shells":[2,8,18,18,4],"state":"rắn","valence":4,"neutrons":69,"note":"Thiếc là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":51,"sym":"Sb","name":"Antimon","mass":121.76,"cat":"metalloid","row":5,"col":15,"period":5,"group":15,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p³","shells":[2,8,18,18,5],"state":"rắn","valence":5,"neutrons":71,"note":"Antimon có tính chất trung gian giữa kim loại và phi kim, thường là chất bán dẫn."},{"z":52,"sym":"Te","name":"Telu","mass":127.6,"cat":"metalloid","row":5,"col":16,"period":5,"group":16,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p⁴","shells":[2,8,18,18,6],"state":"rắn","valence":6,"neutrons":76,"note":"Telu có tính chất trung gian giữa kim loại và phi kim, thường là chất bán dẫn."},{"z":53,"sym":"I","name":"Iot","mass":126.9,"cat":"halogen","row":5,"col":17,"period":5,"group":17,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p⁵","shells":[2,8,18,18,7],"state":"rắn","valence":7,"neutrons":74,"note":"Iot thiếu 1 electron để đủ 8 nên rất dễ nhận electron, là phi kim mạnh."},{"z":54,"sym":"Xe","name":"Xenon","mass":131.29,"cat":"noble","row":5,"col":18,"period":5,"group":18,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p⁶","shells":[2,8,18,18,8],"state":"khí","valence":8,"neutrons":77,"note":"Xenon có lớp ngoài cùng bão hòa nên rất trơ về mặt hóa học."},{"z":55,"sym":"Cs","name":"Xesi","mass":132.91,"cat":"alkali","row":6,"col":1,"period":6,"group":1,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p⁶ 6s¹","shells":[2,8,18,18,8,1],"state":"rắn","valence":1,"neutrons":78,"note":"Xesi dễ nhường 1 electron nên rất hoạt động; phản ứng mạnh với nước."},{"z":56,"sym":"Ba","name":"Bari","mass":137.33,"cat":"alkaline","row":6,"col":2,"period":6,"group":2,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p⁶ 6s²","shells":[2,8,18,18,8,2],"state":"rắn","valence":2,"neutrons":81,"note":"Bari nhường 2 electron, hoạt động hóa học mạnh nhưng yếu hơn kim loại kiềm."},{"z":57,"sym":"La","name":"Lantan","mass":138.91,"cat":"lanth","row":9,"col":3,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 5s² 5p⁶ 5d¹ 6s²","shells":[2,8,18,18,9,2],"state":"rắn","valence":2,"neutrons":82,"note":"Lantan là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":58,"sym":"Ce","name":"Xeri","mass":140.12,"cat":"lanth","row":9,"col":4,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f² 5s² 5p⁶ 6s²","shells":[2,8,18,20,8,2],"state":"rắn","valence":2,"neutrons":82,"note":"Xeri là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":59,"sym":"Pr","name":"Praseodymi","mass":140.91,"cat":"lanth","row":9,"col":5,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f³ 5s² 5p⁶ 6s²","shells":[2,8,18,21,8,2],"state":"rắn","valence":2,"neutrons":82,"note":"Praseodymi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":60,"sym":"Nd","name":"Neodymi","mass":144.24,"cat":"lanth","row":9,"col":6,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f⁴ 5s² 5p⁶ 6s²","shells":[2,8,18,22,8,2],"state":"rắn","valence":2,"neutrons":84,"note":"Neodymi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":61,"sym":"Pm","name":"Prometi","mass":145.0,"cat":"lanth","row":9,"col":7,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f⁵ 5s² 5p⁶ 6s²","shells":[2,8,18,23,8,2],"state":"rắn","valence":2,"neutrons":84,"note":"Prometi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":62,"sym":"Sm","name":"Samari","mass":150.36,"cat":"lanth","row":9,"col":8,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f⁶ 5s² 5p⁶ 6s²","shells":[2,8,18,24,8,2],"state":"rắn","valence":2,"neutrons":88,"note":"Samari là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":63,"sym":"Eu","name":"Europi","mass":151.96,"cat":"lanth","row":9,"col":9,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f⁷ 5s² 5p⁶ 6s²","shells":[2,8,18,25,8,2],"state":"rắn","valence":2,"neutrons":89,"note":"Europi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":64,"sym":"Gd","name":"Gadolini","mass":157.25,"cat":"lanth","row":9,"col":10,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f⁷ 5s² 5p⁶ 5d¹ 6s²","shells":[2,8,18,25,9,2],"state":"rắn","valence":2,"neutrons":93,"note":"Gadolini là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":65,"sym":"Tb","name":"Terbi","mass":158.93,"cat":"lanth","row":9,"col":11,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f⁹ 5s² 5p⁶ 6s²","shells":[2,8,18,27,8,2],"state":"rắn","valence":2,"neutrons":94,"note":"Terbi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":66,"sym":"Dy","name":"Dysprosi","mass":162.5,"cat":"lanth","row":9,"col":12,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁰ 5s² 5p⁶ 6s²","shells":[2,8,18,28,8,2],"state":"rắn","valence":2,"neutrons":96,"note":"Dysprosi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":67,"sym":"Ho","name":"Honmi","mass":164.93,"cat":"lanth","row":9,"col":13,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹¹ 5s² 5p⁶ 6s²","shells":[2,8,18,29,8,2],"state":"rắn","valence":2,"neutrons":98,"note":"Honmi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":68,"sym":"Er","name":"Erbi","mass":167.26,"cat":"lanth","row":9,"col":14,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹² 5s² 5p⁶ 6s²","shells":[2,8,18,30,8,2],"state":"rắn","valence":2,"neutrons":99,"note":"Erbi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":69,"sym":"Tm","name":"Tuli","mass":168.93,"cat":"lanth","row":9,"col":15,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹³ 5s² 5p⁶ 6s²","shells":[2,8,18,31,8,2],"state":"rắn","valence":2,"neutrons":100,"note":"Tuli là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":70,"sym":"Yb","name":"Ytterbi","mass":173.05,"cat":"lanth","row":9,"col":16,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 6s²","shells":[2,8,18,32,8,2],"state":"rắn","valence":2,"neutrons":103,"note":"Ytterbi là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":71,"sym":"Lu","name":"Luteti","mass":174.97,"cat":"lanth","row":9,"col":17,"period":6,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹ 6s²","shells":[2,8,18,32,9,2],"state":"rắn","valence":2,"neutrons":104,"note":"Luteti là kim loại hiếm có tính chất hóa học rất giống nhau."},{"z":72,"sym":"Hf","name":"Hafni","mass":178.49,"cat":"transition","row":6,"col":4,"period":6,"group":4,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d² 6s²","shells":[2,8,18,32,10,2],"state":"rắn","valence":2,"neutrons":106,"note":"Hafni có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":73,"sym":"Ta","name":"Tantan","mass":180.95,"cat":"transition","row":6,"col":5,"period":6,"group":5,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d³ 6s²","shells":[2,8,18,32,11,2],"state":"rắn","valence":2,"neutrons":108,"note":"Tantan có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":74,"sym":"W","name":"Vonfram","mass":183.84,"cat":"transition","row":6,"col":6,"period":6,"group":6,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d⁴ 6s²","shells":[2,8,18,32,12,2],"state":"rắn","valence":2,"neutrons":110,"note":"Vonfram có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":75,"sym":"Re","name":"Reni","mass":186.21,"cat":"transition","row":6,"col":7,"period":6,"group":7,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d⁵ 6s²","shells":[2,8,18,32,13,2],"state":"rắn","valence":2,"neutrons":111,"note":"Reni có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":76,"sym":"Os","name":"Osmi","mass":190.23,"cat":"transition","row":6,"col":8,"period":6,"group":8,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d⁶ 6s²","shells":[2,8,18,32,14,2],"state":"rắn","valence":2,"neutrons":114,"note":"Osmi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":77,"sym":"Ir","name":"Iridi","mass":192.22,"cat":"transition","row":6,"col":9,"period":6,"group":9,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d⁷ 6s²","shells":[2,8,18,32,15,2],"state":"rắn","valence":2,"neutrons":115,"note":"Iridi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":78,"sym":"Pt","name":"Platin","mass":195.08,"cat":"transition","row":6,"col":10,"period":6,"group":10,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d⁹ 6s¹","shells":[2,8,18,32,17,1],"state":"rắn","valence":1,"neutrons":117,"note":"Platin có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":79,"sym":"Au","name":"Vàng","mass":196.97,"cat":"transition","row":6,"col":11,"period":6,"group":11,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s¹","shells":[2,8,18,32,18,1],"state":"rắn","valence":1,"neutrons":118,"note":"Kim loại quý, rất trơ, không bị gỉ."},{"z":80,"sym":"Hg","name":"Thủy ngân","mass":200.59,"cat":"transition","row":6,"col":12,"period":6,"group":12,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s²","shells":[2,8,18,32,18,2],"state":"lỏng","valence":2,"neutrons":121,"note":"Kim loại duy nhất ở thể lỏng ở nhiệt độ phòng, rất độc."},{"z":81,"sym":"Tl","name":"Tali","mass":204.38,"cat":"post","row":6,"col":13,"period":6,"group":13,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p¹","shells":[2,8,18,32,18,3],"state":"rắn","valence":3,"neutrons":123,"note":"Tali là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":82,"sym":"Pb","name":"Chì","mass":207.2,"cat":"post","row":6,"col":14,"period":6,"group":14,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p²","shells":[2,8,18,32,18,4],"state":"rắn","valence":4,"neutrons":125,"note":"Kim loại nặng, độc; từng dùng làm ống nước và sơn."},{"z":83,"sym":"Bi","name":"Bismut","mass":208.98,"cat":"post","row":6,"col":15,"period":6,"group":15,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p³","shells":[2,8,18,32,18,5],"state":"rắn","valence":5,"neutrons":126,"note":"Bismut là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":84,"sym":"Po","name":"Poloni","mass":209.0,"cat":"post","row":6,"col":16,"period":6,"group":16,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p⁴","shells":[2,8,18,32,18,6],"state":"rắn","valence":6,"neutrons":125,"note":"Poloni là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":85,"sym":"At","name":"Astatin","mass":210.0,"cat":"halogen","row":6,"col":17,"period":6,"group":17,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p⁵","shells":[2,8,18,32,18,7],"state":"rắn","valence":7,"neutrons":125,"note":"Astatin thiếu 1 electron để đủ 8 nên rất dễ nhận electron, là phi kim mạnh."},{"z":86,"sym":"Rn","name":"Radon","mass":222.0,"cat":"noble","row":6,"col":18,"period":6,"group":18,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p⁶","shells":[2,8,18,32,18,8],"state":"khí","valence":8,"neutrons":136,"note":"Radon có lớp ngoài cùng bão hòa nên rất trơ về mặt hóa học."},{"z":87,"sym":"Fr","name":"Franxi","mass":223.0,"cat":"alkali","row":7,"col":1,"period":7,"group":1,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p⁶ 7s¹","shells":[2,8,18,32,18,8,1],"state":"rắn","valence":1,"neutrons":136,"note":"Franxi dễ nhường 1 electron nên rất hoạt động; phản ứng mạnh với nước."},{"z":88,"sym":"Ra","name":"Radi","mass":226.0,"cat":"alkaline","row":7,"col":2,"period":7,"group":2,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 6s² 6p⁶ 7s²","shells":[2,8,18,32,18,8,2],"state":"rắn","valence":2,"neutrons":138,"note":"Radi nhường 2 electron, hoạt động hóa học mạnh nhưng yếu hơn kim loại kiềm."},{"z":89,"sym":"Ac","name":"Actini","mass":227.0,"cat":"actin","row":10,"col":3,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹ 6s² 6p⁶ 7s²","shells":[2,8,18,32,19,8,2],"state":"rắn","valence":2,"neutrons":138,"note":"Actini đều có tính phóng xạ."},{"z":90,"sym":"Th","name":"Thori","mass":232.04,"cat":"actin","row":10,"col":4,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f² 6s² 6p⁶ 7s²","shells":[2,8,18,32,20,8,2],"state":"rắn","valence":2,"neutrons":142,"note":"Thori đều có tính phóng xạ."},{"z":91,"sym":"Pa","name":"Protactini","mass":231.04,"cat":"actin","row":10,"col":5,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f³ 6s² 6p⁶ 7s²","shells":[2,8,18,32,21,8,2],"state":"rắn","valence":2,"neutrons":140,"note":"Protactini đều có tính phóng xạ."},{"z":92,"sym":"U","name":"Urani","mass":238.03,"cat":"actin","row":10,"col":6,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f⁴ 6s² 6p⁶ 7s²","shells":[2,8,18,32,22,8,2],"state":"rắn","valence":2,"neutrons":146,"note":"Phóng xạ, là nhiên liệu của lò phản ứng hạt nhân."},{"z":93,"sym":"Np","name":"Neptuni","mass":237.0,"cat":"actin","row":10,"col":7,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f⁵ 6s² 6p⁶ 7s²","shells":[2,8,18,32,23,8,2],"state":"rắn","valence":2,"neutrons":144,"note":"Neptuni đều có tính phóng xạ."},{"z":94,"sym":"Pu","name":"Plutoni","mass":244.0,"cat":"actin","row":10,"col":8,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f⁶ 6s² 6p⁶ 7s²","shells":[2,8,18,32,24,8,2],"state":"rắn","valence":2,"neutrons":150,"note":"Plutoni đều có tính phóng xạ."},{"z":95,"sym":"Am","name":"Americi","mass":243.0,"cat":"actin","row":10,"col":9,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f⁷ 6s² 6p⁶ 7s²","shells":[2,8,18,32,25,8,2],"state":"rắn","valence":2,"neutrons":148,"note":"Americi đều có tính phóng xạ."},{"z":96,"sym":"Cm","name":"Curi","mass":247.0,"cat":"actin","row":10,"col":10,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f⁸ 6s² 6p⁶ 7s²","shells":[2,8,18,32,26,8,2],"state":"rắn","valence":2,"neutrons":151,"note":"Curi đều có tính phóng xạ."},{"z":97,"sym":"Bk","name":"Berkeli","mass":247.0,"cat":"actin","row":10,"col":11,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f⁹ 6s² 6p⁶ 7s²","shells":[2,8,18,32,27,8,2],"state":"rắn","valence":2,"neutrons":150,"note":"Berkeli đều có tính phóng xạ."},{"z":98,"sym":"Cf","name":"Californi","mass":251.0,"cat":"actin","row":10,"col":12,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁰ 6s² 6p⁶ 7s²","shells":[2,8,18,32,28,8,2],"state":"rắn","valence":2,"neutrons":153,"note":"Californi đều có tính phóng xạ."},{"z":99,"sym":"Es","name":"Einsteini","mass":252.0,"cat":"actin","row":10,"col":13,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹¹ 6s² 6p⁶ 7s²","shells":[2,8,18,32,29,8,2],"state":"rắn","valence":2,"neutrons":153,"note":"Einsteini đều có tính phóng xạ."},{"z":100,"sym":"Fm","name":"Fermi","mass":257.0,"cat":"actin","row":10,"col":14,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹² 6s² 6p⁶ 7s²","shells":[2,8,18,32,30,8,2],"state":"rắn","valence":2,"neutrons":157,"note":"Fermi đều có tính phóng xạ."},{"z":101,"sym":"Md","name":"Mendelevi","mass":258.0,"cat":"actin","row":10,"col":15,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹³ 6s² 6p⁶ 7s²","shells":[2,8,18,32,31,8,2],"state":"rắn","valence":2,"neutrons":157,"note":"Mendelevi đều có tính phóng xạ."},{"z":102,"sym":"No","name":"Nobeli","mass":259.0,"cat":"actin","row":10,"col":16,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 7s²","shells":[2,8,18,32,32,8,2],"state":"rắn","valence":2,"neutrons":157,"note":"Nobeli đều có tính phóng xạ."},{"z":103,"sym":"Lr","name":"Lawrenci","mass":266.0,"cat":"actin","row":10,"col":17,"period":7,"group":null,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹ 7s²","shells":[2,8,18,32,32,9,2],"state":"rắn","valence":2,"neutrons":163,"note":"Lawrenci đều có tính phóng xạ."},{"z":104,"sym":"Rf","name":"Rutherfordi","mass":267.0,"cat":"transition","row":7,"col":4,"period":7,"group":4,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d² 7s²","shells":[2,8,18,32,32,10,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":163,"note":"Rutherfordi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":105,"sym":"Db","name":"Dubni","mass":268.0,"cat":"transition","row":7,"col":5,"period":7,"group":5,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d³ 7s²","shells":[2,8,18,32,32,11,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":163,"note":"Dubni có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":106,"sym":"Sg","name":"Seaborgi","mass":269.0,"cat":"transition","row":7,"col":6,"period":7,"group":6,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d⁴ 7s²","shells":[2,8,18,32,32,12,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":163,"note":"Seaborgi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":107,"sym":"Bh","name":"Bohri","mass":270.0,"cat":"transition","row":7,"col":7,"period":7,"group":7,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d⁵ 7s²","shells":[2,8,18,32,32,13,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":163,"note":"Bohri có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":108,"sym":"Hs","name":"Hassi","mass":277.0,"cat":"transition","row":7,"col":8,"period":7,"group":8,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d⁶ 7s²","shells":[2,8,18,32,32,14,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":169,"note":"Hassi có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":109,"sym":"Mt","name":"Meitneri","mass":278.0,"cat":"transition","row":7,"col":9,"period":7,"group":9,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d⁷ 7s²","shells":[2,8,18,32,32,15,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":169,"note":"Meitneri có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":110,"sym":"Ds","name":"Darmstadti","mass":281.0,"cat":"transition","row":7,"col":10,"period":7,"group":10,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d⁸ 7s²","shells":[2,8,18,32,32,16,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":171,"note":"Darmstadti có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":111,"sym":"Rg","name":"Roentgeni","mass":282.0,"cat":"transition","row":7,"col":11,"period":7,"group":11,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d⁹ 7s²","shells":[2,8,18,32,32,17,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":171,"note":"Roentgeni có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":112,"sym":"Cn","name":"Copernici","mass":285.0,"cat":"transition","row":7,"col":12,"period":7,"group":12,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s²","shells":[2,8,18,32,32,18,2],"state":"chưa rõ (dự đoán: rắn)","valence":2,"neutrons":173,"note":"Copernici có nhiều số oxi hóa, thường tạo hợp chất có màu và dùng làm chất xúc tác."},{"z":113,"sym":"Nh","name":"Nihoni","mass":286.0,"cat":"post","row":7,"col":13,"period":7,"group":13,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s² 7p¹","shells":[2,8,18,32,32,18,3],"state":"chưa rõ (dự đoán: rắn)","valence":3,"neutrons":173,"note":"Nihoni là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":114,"sym":"Fl","name":"Flerovi","mass":289.0,"cat":"post","row":7,"col":14,"period":7,"group":14,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s² 7p²","shells":[2,8,18,32,32,18,4],"state":"chưa rõ (dự đoán: rắn)","valence":4,"neutrons":175,"note":"Flerovi là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":115,"sym":"Mc","name":"Moscovi","mass":289.0,"cat":"post","row":7,"col":15,"period":7,"group":15,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s² 7p³","shells":[2,8,18,32,32,18,5],"state":"chưa rõ (dự đoán: rắn)","valence":5,"neutrons":174,"note":"Moscovi là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":116,"sym":"Lv","name":"Livermori","mass":293.0,"cat":"post","row":7,"col":16,"period":7,"group":16,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s² 7p⁴","shells":[2,8,18,32,32,18,6],"state":"chưa rõ (dự đoán: rắn)","valence":6,"neutrons":177,"note":"Livermori là kim loại mềm hơn, nóng chảy thấp hơn kim loại chuyển tiếp."},{"z":117,"sym":"Ts","name":"Tennessin","mass":294.0,"cat":"halogen","row":7,"col":17,"period":7,"group":17,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s² 7p⁵","shells":[2,8,18,32,32,18,7],"state":"chưa rõ (dự đoán: rắn)","valence":7,"neutrons":177,"note":"Tennessin thiếu 1 electron để đủ 8 nên rất dễ nhận electron, là phi kim mạnh."},{"z":118,"sym":"Og","name":"Oganesson","mass":294.0,"cat":"noble","row":7,"col":18,"period":7,"group":18,"config":"1s² 2s² 2p⁶ 3s² 3p⁶ 3d¹⁰ 4s² 4p⁶ 4d¹⁰ 4f¹⁴ 5s² 5p⁶ 5d¹⁰ 5f¹⁴ 6s² 6p⁶ 6d¹⁰ 7s² 7p⁶","shells":[2,8,18,32,32,18,8],"state":"chưa rõ (dự đoán: rắn)","valence":8,"neutrons":176,"note":"Oganesson có lớp ngoài cùng bão hòa nên rất trơ về mặt hóa học."}],"cats":{"alkali":{"vi":"Kim loại kiềm","color":"#ff6b8b"},"alkaline":{"vi":"Kim loại kiềm thổ","color":"#ffa14a"},"transition":{"vi":"Kim loại chuyển tiếp","color":"#6aa8ff"},"post":{"vi":"Kim loại yếu","color":"#5ee0c1"},"metalloid":{"vi":"Á kim","color":"#b8e35a"},"nonmetal":{"vi":"Phi kim","color":"#7cf0ff"},"halogen":{"vi":"Halogen","color":"#c58bff"},"noble":{"vi":"Khí hiếm","color":"#ff8bd8"},"lanth":{"vi":"Họ Lantan","color":"#8f8cff"},"actin":{"vi":"Họ Actini","color":"#d99a78"}},"molecules":{"H2":[["H",-0.45,0,0],["H",0.45,0,0]],"O2":[["O",-0.6,0,0],["O",0.6,0,0]],"N2":[["N",-0.55,0,0],["N",0.55,0,0]],"Cl2":[["Cl",-0.9,0,0],["Cl",0.9,0,0]],"H2O":[["O",0,0,0],["H",0.8,0.6,0],["H",-0.8,0.6,0]],"CO2":[["C",0,0,0],["O",1.25,0,0],["O",-1.25,0,0]],"CH4":[["C",0,0,0],["H",0.85,0.85,0.85],["H",-0.85,-0.85,0.85],["H",-0.85,0.85,-0.85],["H",0.85,-0.85,-0.85]],"NH3":[["N",0,0,0],["H",0.9,-0.4,0],["H",-0.45,-0.4,0.8],["H",-0.45,-0.4,-0.8]],"HCl":[["H",-0.7,0,0],["Cl",0.7,0,0]],"NaCl":[["Na",-1,0,0],["Cl",1,0,0]],"Na":[["Na",0,0,0]],"Mg":[["Mg",0,0,0]],"Zn":[["Zn",0,0,0]],"MgO":[["Mg",-0.9,0,0],["O",0.9,0,0]],"NaOH":[["Na",-1.5,0,0],["O",0,0,0],["H",0.9,0.4,0]],"ZnCl2":[["Cl",-1.6,0,0],["Zn",0,0,0],["Cl",1.6,0,0]]},"reactions":[{"id":"nuoc","title":"Tổng hợp nước","eq":"2H2 + O2 → 2H2O","type":"Hóa hợp, tỏa nhiệt","cond":"Tia lửa điện hoặc nhiệt độ cao","R":[["H2",2],["O2",1]],"P":[["H2O",2]],"keys":["tổng hợp nước","hiđro cháy","hidro cháy","h2 + o2"],"why":"Mỗi phân tử O₂ có 2 nguyên tử O, mỗi O cần góp chung 2 electron với 2 nguyên tử H nên cần 2 phân tử H₂ cho 1 phân tử O₂. Liên kết O–H bền hơn liên kết H–H và O=O nên phản ứng tỏa nhiều nhiệt."},{"id":"nacl","title":"Natri tác dụng với clo","eq":"2Na + Cl2 → 2NaCl","type":"Hóa hợp, tạo liên kết ion","cond":"Đun nóng nhẹ","R":[["Na",2],["Cl2",1]],"P":[["NaCl",2]],"keys":["natri và clo","natri tác dụng với clo","muối ăn","nacl"],"why":"Na có 1 electron ngoài cùng nên nhường đi để thành Na⁺ (bền như Ne). Cl có 7 electron ngoài cùng nên nhận 1 electron thành Cl⁻ (bền như Ar). Hai ion trái dấu hút nhau tạo liên kết ion trong NaCl."},{"id":"ch4","title":"Đốt cháy metan","eq":"CH4 + 2O2 → CO2 + 2H2O","type":"Oxi hóa khử, cháy","cond":"Nhiệt độ cao","R":[["CH4",1],["O2",2]],"P":[["CO2",1],["H2O",2]],"keys":["metan","ch4","khí gas","đốt cháy"],"why":"C trong CH₄ bị oxi hóa từ −4 lên +4, O bị khử từ 0 xuống −2. Cần 2 phân tử O₂ (4 nguyên tử O) để tạo 1 CO₂ (2 O) và 2 H₂O (2 O)."},{"id":"nh3","title":"Tổng hợp amoniac (Haber)","eq":"N2 + 3H2 → 2NH3","type":"Hóa hợp, thuận nghịch","cond":"450 °C, 200 atm, xúc tác Fe","R":[["N2",1],["H2",3]],"P":[["NH3",2]],"keys":["amoniac","nh3","haber"],"why":"Liên kết ba N≡N rất bền nên cần nhiệt độ và xúc tác. Phản ứng thuận nghịch và giảm số mol khí (4 → 2), nên áp suất cao làm cân bằng chuyển về phía tạo NH₃."},{"id":"mgo","title":"Magie cháy trong oxi","eq":"2Mg + O2 → 2MgO","type":"Oxi hóa khử, tỏa nhiệt","cond":"Đốt nóng, ánh sáng trắng chói","R":[["Mg",2],["O2",1]],"P":[["MgO",2]],"keys":["magie","mgo"],"why":"Mỗi Mg nhường 2 electron (thành Mg²⁺), mỗi O nhận 2 electron (thành O²⁻). Tổng 4 electron trao đổi nên cần 2 Mg cho 1 O₂."},{"id":"hcl","title":"Hiđro tác dụng với clo","eq":"H2 + Cl2 → 2HCl","type":"Hóa hợp","cond":"Ánh sáng hoặc đun nóng","R":[["H2",1],["Cl2",1]],"P":[["HCl",2]],"keys":["hcl","axit clohiđric","hiđro tác dụng với clo"],"why":"Mỗi nguyên tử H góp chung 1 electron với 1 nguyên tử Cl tạo liên kết cộng hóa trị phân cực H–Cl. Hòa tan vào nước, HCl cho axit clohiđric."},{"id":"naoh","title":"Natri tác dụng với nước","eq":"2Na + 2H2O → 2NaOH + H2","type":"Oxi hóa khử, tỏa nhiệt","cond":"Nhiệt độ phòng, rất mạnh","R":[["Na",2],["H2O",2]],"P":[["NaOH",2],["H2",1]],"keys":["natri với nước","natri tác dụng với nước","phản ứng mạnh với nước","natri phản ứng","na và nước","kim loại kiềm với nước","naoh"],"why":"Na dễ nhường 1 electron cho H trong nước, giải phóng khí H₂ và tạo dung dịch bazơ NaOH. Phản ứng tỏa nhiều nhiệt nên có thể làm H₂ bốc cháy."},{"id":"zncl2","title":"Kẽm tan trong axit clohiđric","eq":"Zn + 2HCl → ZnCl2 + H2","type":"Thế","cond":"Nhiệt độ phòng","R":[["Zn",1],["HCl",2]],"P":[["ZnCl2",1],["H2",1]],"keys":["kẽm","zncl2","zn và hcl"],"why":"Zn đứng trước H trong dãy hoạt động hóa học nên đẩy H ra khỏi axit: Zn nhường 2 electron thành Zn²⁺, hai H⁺ nhận electron thành H₂."}],"concepts":[[["liên kết ion"],"**Liên kết ion** hình thành khi một nguyên tử nhường electron (thường là kim loại) và nguyên tử kia nhận electron (thường là phi kim). Hai ion trái dấu hút nhau bằng lực tĩnh điện, ví dụ Na⁺ và Cl⁻ trong NaCl."],[["liên kết cộng hóa trị","cộng hoá trị"],"**Liên kết cộng hóa trị** là sự góp chung cặp electron giữa các nguyên tử phi kim để cùng đạt cấu hình bền, ví dụ H–H trong H₂, O–H trong H₂O. Nếu độ âm điện chênh lệch thì liên kết phân cực."],[["cấu hình electron là gì","cấu hình electron"],"**Cấu hình electron** cho biết electron chiếm các phân lớp theo thứ tự năng lượng tăng dần: 1s 2s 2p 3s 3p 4s 3d 4p 5s ... Mỗi phân lớp s, p, d, f chứa tối đa 2, 6, 10, 14 electron. Hãy chọn một nguyên tố trên bảng rồi hỏi để mình giải thích cụ thể."],[["độ âm điện"],"**Độ âm điện** là khả năng hút electron của nguyên tử trong liên kết. Trong bảng tuần hoàn, nó tăng từ trái sang phải trong một chu kì và giảm từ trên xuống dưới trong một nhóm; flo là nguyên tố có độ âm điện lớn nhất."],[["chu kì","chu kỳ","nhóm là gì","quy luật"],"Số **chu kì** bằng số lớp electron; số thứ tự **nhóm A** bằng số electron lớp ngoài cùng. Đi từ trái sang phải trong chu kì, tính kim loại giảm và tính phi kim tăng; đi từ trên xuống trong nhóm, bán kính nguyên tử và tính kim loại tăng."],[["cân bằng phương trình","cân bằng"],"Để **cân bằng phương trình**, hãy đếm số nguyên tử từng nguyên tố ở hai vế rồi chỉnh hệ số (không đổi chỉ số trong công thức). Mẹo: cân bằng nguyên tố xuất hiện ít nhất trước, để H và O sau cùng. Xem tab Phản ứng để thấy số phân tử cần thiết."],[["bảng tuần hoàn là gì","mendeleev"],"**Bảng tuần hoàn** sắp xếp các nguyên tố theo số hiệu nguyên tử tăng dần, để các nguyên tố cùng cột (nhóm) có tính chất hóa học tương tự do cùng số electron lớp ngoài cùng. Mendeleev công bố bản đầu tiên năm 1869 và còn dự đoán đúng các nguyên tố chưa được tìm ra."]]};
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/đ/g,'d').replace(/[\u0300-\u036f]/g,'');
+function explainEl(e){const v=e.valence,g=e.group;let t;
+ if(e.cat==='noble')t='lớp ngoài cùng đã bão hòa nên rất bền, gần như không phản ứng';
+ else if(['transition','lanth','actin'].includes(e.cat))t='electron ở phân lớp d/f cũng tham gia liên kết nên có nhiều hóa trị';
+ else if(v<=3)t=`dễ nhường ${v} electron tạo ion dương, thể hiện tính kim loại`;
+ else if(v>=5)t=`dễ nhận ${8-v} electron để đạt 8 electron, thể hiện tính phi kim`;
+ else t='có xu hướng góp chung 4 electron để tạo liên kết cộng hóa trị';
+ const where=`chu kì ${e.period} (có ${e.shells.length} lớp electron)`+(g?`, nhóm ${g}`:', khối f (hai hàng dưới cùng)');
+ return `**${e.name} (${e.sym})** có số hiệu ${e.z}, khối lượng nguyên tử khoảng ${e.mass}, thuộc nhóm ${DATA.cats[e.cat].vi.toLowerCase()}.\n• Cấu hình electron: ${e.config}; phân bố theo lớp: ${e.shells.join(', ')}.\n• Vị trí: ${where}.\n• Có ${v} electron lớp ngoài cùng nên ${t}.\n• ${e.note}`}
+function localAnswer(q,sel){const ql=q.toLowerCase(),E=DATA.elements;
+ for(const r of DATA.reactions)if(r.keys.some(k=>ql.includes(k)))return `**${r.title}**: ${r.eq}\n${r.why}`;
+ const nq=norm(q);let f=E.filter(e=>nq.includes(norm(e.name)));
+ E.forEach(e=>{if(e.sym.length===2&&new RegExp('\\b'+e.sym+'\\b').test(q)&&!f.includes(e))f.push(e)});
+ const con=()=>{for(const[k,t]of DATA.concepts)if(k.some(x=>ql.includes(x)))return t};
+ if(!f.length){const c=con();if(c)return c;const s=E.find(x=>x.sym===sel);if(s)f=[s]}
+ if(f.length){const e=f[0];
+  if(ql.includes('so sánh')&&f.length>1){const a=f[0],b=f[1],L=x=>`• ${x.name}: ${x.config} (lớp ngoài cùng ${x.valence} e, ${DATA.cats[x.cat].vi.toLowerCase()}).`;
+   return `**So sánh ${a.name} và ${b.name}**\n${L(a)}\n${L(b)}\n`+(a.group&&a.group===b.group?'Hai nguyên tố cùng nhóm nên có tính chất hóa học tương tự.':'Khác nhóm nên số electron hóa trị khác nhau, dẫn tới tính chất khác nhau.')}
+  return explainEl(e)}
+ return con()||'Mình chưa nhận ra nội dung câu hỏi. Hãy thử nhắc tên một nguyên tố (ví dụ: *Giải thích cấu hình electron của sắt*), tên một phản ứng (ví dụ: *Vì sao natri phản ứng mạnh với nước?*) hoặc một khái niệm (liên kết ion, độ âm điện, chu kì...).'}
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let D, sel, cat=null, q='', paused=false, last=performance.now(), clock=0;
+
+/* ---------- nền sao ---------- */
+(function(){const c=$('#stars'),x=c.getContext('2d');let W,H,S=[];
+ function size(){W=c.width=innerWidth;H=c.height=innerHeight;S=Array.from({length:Math.min(260,W*H/6000|0)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.2,p:Math.random()*6.3,s:.4+Math.random()*1.4}))}
+ size();addEventListener('resize',size);
+ const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ (function f(t){x.clearRect(0,0,W,H);for(const s of S){x.globalAlpha=.35+.65*Math.abs(Math.sin(s.p+(calm?0:t/1000*s.s)));x.fillStyle=s.r>1.1?'#bfe9ff':'#fff';x.beginPath();x.arc(s.x,s.y,s.r,0,6.3);x.fill()}requestAnimationFrame(f)})(0)})();
+
+D=DATA;init();
+
+function init(){
+ buildTable();buildLegend();buildReactions();initQuiz();initAI();
+ $('#tabs').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.t)};
+ $('#search').oninput=e=>{q=e.target.value.trim().toLowerCase();filter()};
+ select(D.elements[25]);selectReaction(0);requestAnimationFrame(loop);
+}
+function showTab(t){$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));$$('.tab').forEach(s=>s.classList.toggle('on',s.id===t))}
+
+/* ---------- bảng tuần hoàn ---------- */
+function buildTable(){
+ const T=$('#table');
+ D.elements.forEach(e=>{const b=document.createElement('button');b.className='cell';b.id='el'+e.z;
+  b.style.cssText=`grid-row:${e.row};grid-column:${e.col};--c:${D.cats[e.cat].color}`;
+  b.innerHTML=`<span class="n">${e.z}</span><span class="s">${e.sym}</span><span class="m">${e.name}</span>`;
+  b.title=`${e.name} (${e.sym})`;b.onclick=()=>{select(e);showTab('t1')};T.appendChild(b)});
+ [[6,'57–71'],[7,'89–103']].forEach(([r,t])=>{const d=document.createElement('div');d.className='ph';d.style.cssText=`grid-row:${r};grid-column:3`;d.textContent=t;T.appendChild(d)});
+}
+function buildLegend(){
+ const L=$('#legend');
+ Object.entries(D.cats).forEach(([k,v])=>{const b=document.createElement('button');b.style.setProperty('--c',v.color);
+  b.innerHTML=`<i></i>${v.vi}`;b.onclick=()=>{cat=cat===k?null:k;$$('#legend button').forEach(x=>x.classList.remove('on'));if(cat)b.classList.add('on');filter()};L.appendChild(b)});
+}
+function filter(){D.elements.forEach(e=>{const ok=(!cat||e.cat===cat)&&(!q||e.name.toLowerCase().includes(q)||e.sym.toLowerCase()===q||String(e.z)===q||e.sym.toLowerCase().startsWith(q));
+ $('#el'+e.z).classList.toggle('dim',!ok)})}
+
+/* ---------- thông tin nguyên tố ---------- */
+function select(e){
+ sel=e;$$('.cell').forEach(c=>c.classList.remove('sel'));$('#el'+e.z).classList.add('sel');
+ const c=D.cats[e.cat];
+ $('#info').style.setProperty('--c',c.color);
+ $('#info').innerHTML=`<div class="hero"><div class="big"><b>${e.sym}</b><span>${e.z}</span></div>
+  <div><h2>${e.name}</h2><small>${c.vi}</small></div></div>
+  <div class="props">
+   <div><span>Khối lượng nguyên tử</span><b>${e.mass}</b></div>
+   <div><span>Trạng thái (25 °C)</span><b>${e.state}</b></div>
+   <div><span>Chu kì</span><b>${e.period}</b></div>
+   <div><span>Nhóm</span><b>${e.group??'Khối f'}</b></div>
+   <div><span>Proton / Electron</span><b>${e.z} / ${e.z}</b></div>
+   <div><span>Nơtron (xấp xỉ)</span><b>${e.neutrons}</b></div>
+   <div><span>Số lớp electron</span><b>${e.shells.length}</b></div>
+   <div><span>Electron lớp ngoài cùng</span><b>${e.valence}</b></div>
+   <div class="wide"><span>Cấu hình electron</span><b>${e.config}</b></div>
+   <div class="wide"><span>Phân bố theo lớp (K, L, M...)</span><b>${e.shells.join(', ')}</b></div>
+  </div><p class="note">${e.note}</p>
+  <div class="chips"><button id="askAI">Nhờ trợ lý AI giải thích ${e.name}</button></div>`;
+ $('#askAI').onclick=()=>{showTab('t4');ask(`Giải thích cấu hình electron và tính chất của ${e.name}`)};
+ buildAtom(e);
+}
+
+/* ---------- three.js dùng chung ---------- */
+function makeScene(cv,z){
+ const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}),s=new THREE.Scene(),
+  cam=new THREE.PerspectiveCamera(50,1,.1,300),root=new THREE.Group();
+ cam.position.z=z;s.add(root,new THREE.AmbientLight(0xffffff,.7));
+ const L=new THREE.PointLight(0xffffff,1.3);L.position.set(12,16,24);s.add(L);
+ const S={r,s,cam,root,w:0,h:0,vy:.002,vx:0};
+ let drag=false,px,py;
+ cv.onpointerdown=e=>{drag=true;px=e.clientX;py=e.clientY;cv.setPointerCapture(e.pointerId)};
+ cv.onpointerup=()=>drag=false;
+ cv.onpointermove=e=>{if(!drag)return;root.rotation.y+=(e.clientX-px)*.008;root.rotation.x+=(e.clientY-py)*.008;px=e.clientX;py=e.clientY};
+ return S;
+}
+function draw(S,cv){
+ if(!cv.offsetParent)return;
+ const w=cv.clientWidth,h=cv.clientHeight;
+ if(w!==S.w||h!==S.h){S.w=w;S.h=h;S.r.setPixelRatio(Math.min(devicePixelRatio,2));S.r.setSize(w,h,false);S.cam.aspect=w/h;S.cam.updateProjectionMatrix()}
+ S.r.render(S.s,S.cam);
+}
+function clear(g){while(g.children.length){const o=g.children.pop();o.geometry&&o.geometry.dispose()}}
+const sph=(r,c,e=0)=>new THREE.Mesh(new THREE.SphereGeometry(r,20,16),new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:e,roughness:.4}));
+
+/* ---------- mô hình nguyên tử ---------- */
+let A,orbits=[];
+function buildAtom(e){
+ if(!window.THREE)return;
+ A=A||makeScene($('#atomCv'),36);
+ clear(A.root);orbits=[];A.root.rotation.set(.35,0,0);
+ const n=Math.min(e.z,36),m=Math.min(e.neutrons,36),rad=1.1+Math.cbrt(n+m)*.35;
+ for(let i=0;i<n+m;i++){const p=sph(.5,i<n?0xff5468:0x8a96b8,.15);
+  const v=new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).normalize().multiplyScalar(rad*Math.cbrt(Math.random()));
+  p.position.copy(v);A.root.add(p)}
+ const step=Math.min(2.6,15/e.shells.length);
+ e.shells.forEach((cnt,i)=>{
+  const R=rad+2.6+i*step,g=new THREE.Group();g.rotation.set(i*.55,i*.9,i*.3);
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(R,.05,8,128),new THREE.MeshBasicMaterial({color:0x6a7bff,transparent:true,opacity:.45})));
+  const els=[];
+  for(let k=0;k<cnt;k++){const outer=i===e.shells.length-1,m=sph(.42,outer?0xffb86b:0x7cf0ff,.9);g.add(m);els.push({m,a:k/cnt*6.283})}
+  orbits.push({R,els,sp:1.5/Math.pow(i+1,.75)});A.root.add(g)});
+}
+$('#pauseA').onclick=e=>{paused=!paused;e.target.textContent=paused?'Tiếp tục':'Tạm dừng'};
+
+/* ---------- phản ứng ---------- */
+const COL={H:0xf0f0ff,O:0xff4d5e,N:0x4d7cff,Cl:0x3ddc84,C:0x8a8aa0,Na:0xb36bff,Mg:0xb8e34d,Zn:0x8fa3b8},RAD={H:.42,O:.68,N:.64,Cl:.9,C:.7,Na:1,Mg:.95,Zn:.9};
+let R,rx,cur=0;
+const fmt=s=>s.replace(/([A-Za-z\)])(\d+)/g,'$1<sub>$2</sub>');
+function buildReactions(){
+ const L=$('#rlist');
+ D.reactions.forEach((r,i)=>{const b=document.createElement('button');b.innerHTML=`${r.title}<small>${fmt(r.eq)}</small>`;b.onclick=()=>selectReaction(i);L.appendChild(b)});
+ $('#replay').onclick=()=>clock=0;
+}
+function molecule(name){
+ const g=new THREE.Group(),at=D.molecules[name];
+ at.forEach(([el,x,y,z])=>{const s=sph(RAD[el]||.7,COL[el]||0xffffff,.12);s.position.set(x,y,z);g.add(s)});
+ for(let i=0;i<at.length;i++)for(let j=i+1;j<at.length;j++){
+  const a=new THREE.Vector3(...at[i].slice(1)),b=new THREE.Vector3(...at[j].slice(1)),d=a.distanceTo(b);
+  if(d>1.9)continue;
+  const c=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,d,8),new THREE.MeshStandardMaterial({color:0xaab0d8}));
+  c.position.copy(a).add(b).multiplyScalar(.5);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());g.add(c)}
+ return g;
+}
+function selectReaction(i){
+ cur=i;$$('#rlist button').forEach((b,k)=>b.classList.toggle('on',k===i));
+ const r=D.reactions[i];
+ $('#eq').innerHTML=fmt(r.eq);
+ $('#rinfo').innerHTML=`<b>Loại:</b> ${r.type}. <b>Điều kiện:</b> ${r.cond}.<br>${r.why}`;
+ if(!window.THREE)return;
+ R=R||makeScene($('#rxCv'),24);
+ clear(R.root);R.root.rotation.set(.3,0,0);
+ const mk=l=>l.flatMap(([n,c])=>Array.from({length:c},()=>molecule(n)));
+ rx={re:mk(r.R),pr:mk(r.P)};
+ [...rx.re,...rx.pr].forEach(g=>R.root.add(g));
+ const f=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:0xfff3b0,transparent:true,opacity:0}));
+ rx.flash=f;R.root.add(f);clock=0;
+}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function stepReaction(){
+ if(!rx)return;
+ const T=7,t=((clock*$('#spdR').value)%T)/T,N=rx.re.length,M=rx.pr.length;
+ rx.re.forEach((g,i)=>{const a=i/N*6.283,p=ease(Math.min(t/.45,1));
+  g.visible=t<.5;const r=10*(1-p)+1.3*p,an=a+p*1.8;
+  g.position.set(Math.cos(an)*r,Math.sin(a*2+1)*2.5*(1-p),Math.sin(an)*r);g.rotation.y+=.02;g.rotation.x+=.01});
+ rx.pr.forEach((g,i)=>{const a=i/M*6.283+.7,q=ease(Math.max(0,Math.min((t-.5)/.5,1)));
+  g.visible=t>=.5;g.position.set(Math.cos(a)*(1+7*q),Math.sin(a*2)*2*q,Math.sin(a)*(1+7*q));g.rotation.y+=.025;g.rotation.z+=.01});
+ const fl=Math.max(0,1-Math.abs(t-.5)/.07);rx.flash.material.opacity=fl*.8;rx.flash.scale.setScalar(1+fl*5);
+}
+
+/* ---------- vòng lặp ---------- */
+function loop(now){
+ requestAnimationFrame(loop);
+ const dt=Math.min((now-last)/1000,.05);last=now;clock+=dt;
+ if(A&&$('#atomCv').offsetParent){
+  const sp=+$('#spdA').value;
+  if(!paused)orbits.forEach(o=>o.els.forEach(e=>{e.a+=dt*o.sp*sp;e.m.position.set(Math.cos(e.a)*o.R,Math.sin(e.a)*o.R,0)}));
+  draw(A,$('#atomCv'));
+ }
+ if(R&&$('#rxCv').offsetParent){stepReaction();draw(R,$('#rxCv'))}
+}
+
+/* ---------- khung chat ---------- */
+function say(box,html,cls='bot'){const d=document.createElement('div');d.className='m '+cls;d.innerHTML=html;box.appendChild(d);box.scrollTop=box.scrollHeight;return d}
+const md=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/\n/g,'<br>');
+
+/* ---------- chatbot ôn tập ---------- */
+let sc=0,tot=0,st=0,Q=null;
+const pick=a=>a[Math.random()*a.length|0];
+function others(pool,ans,k=3){const s=new Set([ans]);let g=0;while(s.size<k+1&&g++<200)s.add(pick(pool));return [...s]}
+function shuffle(a){return a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1])}
+function makeQ(){
+ const lim=+$('#lvl').value,P=D.elements.filter(e=>e.z<=lim),e=pick(P),main=P.filter(x=>x.cat!=='transition'&&x.cat!=='noble'&&x.cat!=='lanth'&&x.cat!=='actin');
+ const t=Math.random()*5|0;
+ if(t===0)return{p:`Ký hiệu hóa học của **${e.name}** là gì?`,a:e.sym,o:others(P.map(x=>x.sym),e.sym),x:`${e.name} có ký hiệu ${e.sym}.`};
+ if(t===1)return{p:`Nguyên tố có số hiệu nguyên tử **${e.z}** là gì?`,a:e.name,o:others(P.map(x=>x.name),e.name),x:`Số hiệu ${e.z} là ${e.name} (${e.sym}), có ${e.z} proton.`};
+ if(t===2){const a=D.cats[e.cat].vi;return{p:`**${e.name}** (${e.sym}) thuộc loại nguyên tố nào?`,a,o:others(Object.values(D.cats).map(c=>c.vi),a),x:`${e.name} thuộc nhóm ${a.toLowerCase()}.`}}
+ if(t===3)return{p:`**${e.name}** nằm ở chu kì mấy?`,a:String(e.period),o:others(['1','2','3','4','5','6','7'],String(e.period)),x:`${e.name} có ${e.shells.length} lớp electron (${e.shells.join(', ')}) nên ở chu kì ${e.period}.`};
+ const m=pick(main.filter(x=>x.z>2));
+ return{p:`Nguyên tử **${m.name}** có bao nhiêu electron ở lớp ngoài cùng?`,a:String(m.valence),o:others(['1','2','3','4','5','6','7','8'],String(m.valence)),x:`Cấu hình ${m.config} nên lớp ngoài cùng có ${m.valence} electron.`};
+}
+function initQuiz(){
+ const box=$('#qMsgs');
+ say(box,'Chào bạn, mình sẽ ra câu hỏi trắc nghiệm về bảng tuần hoàn. Chọn đáp án hoặc gõ câu trả lời nhé.');
+ $('#nextQ').onclick=nextQ;$('#lvl').onchange=nextQ;
+ $('#qSend').onclick=()=>{const v=$('#qIn').value.trim();if(v){$('#qIn').value='';answer(v)}};
+ $('#qIn').onkeydown=e=>{if(e.key==='Enter')$('#qSend').click()};
+ nextQ();
+}
+function nextQ(){
+ Q=makeQ();Q.o=shuffle(Q.o);Q.done=false;
+ const d=say($('#qMsgs'),md(Q.p)+'<div class="opts"></div>');Q.el=d;
+ Q.o.forEach((o,i)=>{const b=document.createElement('button');b.textContent='ABCD'[i]+'. '+o;b.onclick=()=>answer(o,true);d.querySelector('.opts').appendChild(b)});
+}
+const nz=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase().trim();
+function answer(v,fromBtn){
+ if(!Q||Q.done)return;
+ if(!fromBtn){say($('#qMsgs'),md(v),'me');const i='abcd'.indexOf(nz(v));if(v.length===1&&i>=0&&i<Q.o.length)v=Q.o[i]}
+ else say($('#qMsgs'),md(v),'me');
+ Q.done=true;tot++;const ok=nz(v)===nz(Q.a);
+ if(ok){sc++;st++}else st=0;
+ Q.el.querySelectorAll('button').forEach((b,i)=>{b.disabled=true;if(Q.o[i]===Q.a)b.classList.add('right');else if(Q.o[i]===v)b.classList.add('wrong')});
+ $('#score').textContent=`${sc}/${tot}`;$('#streak').textContent=st;
+ say($('#qMsgs'),(ok?'**Chính xác!** ':`**Chưa đúng.** Đáp án là **${Q.a}**. `).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+Q.x,ok?'bot ok':'bot bad');
+ setTimeout(nextQ,900);
+}
+
+/* ---------- trợ lý AI ---------- */
+const hist=[];
+function initAI(){
+ say($('#aMsgs'),'Mình là trợ lý hóa học. Hãy chọn một nguyên tố trên bảng rồi hỏi, hoặc thử các gợi ý bên dưới.');
+ ['Giải thích cấu hình electron của sắt','Vì sao natri phản ứng mạnh với nước?','So sánh natri và kali','Liên kết ion là gì?','Quy luật theo chu kì và nhóm'].forEach(t=>{
+  const b=document.createElement('button');b.textContent=t;b.onclick=()=>ask(t);$('#chips').appendChild(b)});
+ $('#aSend').onclick=()=>{const v=$('#aIn').value.trim();if(v){$('#aIn').value='';ask(v)}};
+ $('#aIn').onkeydown=e=>{if(e.key==='Enter')$('#aSend').click()};
+}
+async function ask(text){
+ const box=$('#aMsgs');say(box,md(text),'me');hist.push({role:'user',content:text});
+ const w=say(box,'Đang suy nghĩ...');
+ try{
+  const r={answer:localAnswer(text,sel&&sel.sym),source:'Cục bộ'};
+  w.innerHTML=md(r.answer)+`<div class="src">Nguồn: ${r.source}</div>`;hist.push({role:'assistant',content:r.answer});
+ }catch(e){w.textContent='Không kết nối được máy chủ.'}
+ box.scrollTop=box.scrollHeight;
+}
+</script></body></html>
