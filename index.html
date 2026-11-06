@@ -179,7 +179,7 @@ let D, sel, cat=null, q='', paused=false, last=performance.now(), clock=0;
  const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
  (function f(t){x.clearRect(0,0,W,H);for(const s of S){x.globalAlpha=.35+.65*Math.abs(Math.sin(s.p+(calm?0:t/1000*s.s)));x.fillStyle=s.r>1.1?'#bfe9ff':'#fff';x.beginPath();x.arc(s.x,s.y,s.r,0,6.3);x.fill()}requestAnimationFrame(f)})(0)})();
 
-D=DATA;init();
+D=DATA;setTimeout(init,0);
 
 function init(){
  buildTable();buildLegend();buildReactions();initQuiz();initAI();
